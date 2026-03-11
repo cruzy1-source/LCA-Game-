@@ -1,1 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eco-Sorter: The Recycling Challenge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@400;600&display=swap');
+        
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background-color: #f0fdf4;
+            overflow-x: hidden;
+        }
 
+        h1, .score-font {
+            font-family: 'Fredoka One', cursive;
+        }
+
+        .bin-hover:hover {
+            transform: scale(1.05);
+            filter: brightness(1.1);
+        }
+
+        .item-card {
+            cursor: grab;
+            transition: transform 0.2s;
+        }
+
+        .item-card:active {
+            cursor: grabbing;
+        }
+
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        .pop {
+            animation: pop 0.3s ease-out;
+        }
+
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center p-4">
+
+    <!-- Header Section -->
+    <header class="w-full max-w-4xl flex justify-between items-center mb-8 mt-4">
+        <div>
+            <h1 class="text-4xl text-green-700">Eco-Sorter</h1>
+            <p class="text-green-600 font-semibold">Keep the planet clean!</p>
+        </div>
+        <div class="bg-white px-6 py-3 rounded-2xl shadow-md border-b-4 border-green-200">
+            <span class="text-gray-500 uppercase text-xs font-bold block">Current Score</span>
+            <span id="score" class="score-font text-3xl text-green-600">0</span>
+        </div>
+    </header>
+
+    <!-- Main Game Area -->
+    <main id="game-container" class="w-full max-w-5xl flex flex-col items-center">
+        
+        <!-- Current Item Card -->
+        <div id="item-display" class="relative mb-12 h-48 flex items-center justify-center w-full">
+            <div id="current-item" class="item-card bg-white p-6 rounded-3xl shadow-xl border-2 border-green-100 flex flex-col items-center w-64">
+                <div id="item-emoji" class="text-6xl mb-2">📦</div>
+                <div id="item-name" class="text-xl font-bold text-gray-700">Cardboard</div>
+            </div>
+        </div>
+
+        <!-- Feedback Message -->
+        <div id="feedback" class="h-8 mb-4 font-bold text-lg transition-all duration-300 opacity-0"></div>
+
+        <!-- Bins Grid -->
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 w-full">
+            <!-- Trash -->
+            <button onclick="checkBin('trash')" class="bin-hover transition-all bg-gray-600 p-4 rounded-2xl flex flex-col items-center text-white shadow-lg">
+                <span class="text-4xl mb-2">🗑️</span>
+                <span class="font-bold uppercase text-xs">Trash</span>
+            </button>
+            <!-- Glass -->
+            <button onclick="checkBin('glass')" class="bin-hover transition-all bg-blue-400 p-4 rounded-2xl flex flex-col items-center text-white shadow-lg">
+                <span class="text-4xl mb-2">🍷</span>
+                <span class="font-bold uppercase text-xs">Glass</span>
+            </button>
+            <!-- Cans & Bottles -->
+            <button onclick="checkBin('plastic')" class="bin-hover transition-all bg-yellow-500 p-4 rounded-2xl flex flex-col items-center text-white shadow-lg">
+                <span class="text-4xl mb-2">🥤</span>
+                <span class="font-bold uppercase text-xs text-center">Cans & Bottles</span>
+            </button>
+            <!-- Metal -->
+            <button onclick="checkBin('metal')" class="bin-hover transition-all bg-slate-400 p-4 rounded-2xl flex flex-col items-center text-white shadow-lg">
+                <span class="text-4xl mb-2">⛓️</span>
+                <span class="font-bold uppercase text-xs">Metal</span>
+            </button>
+            <!-- Paper -->
+            <button onclick="checkBin('paper')" class="bin-hover transition-all bg-blue-600 p-4 rounded-2xl flex flex-col items-center text-white shadow-lg">
+                <span class="text-4xl mb-2">📄</span>
+                <span class="font-bold uppercase text-xs">Paper</span>
+            </button>
+            <!-- Devices -->
+            <button onclick="checkBin('devices')" class="bin-hover transition-all bg-purple-600 p-4 rounded-2xl flex flex-col items-center text-white shadow-lg">
+                <span class="text-4xl mb-2">💻</span>
+                <span class="font-bold uppercase text-xs">Devices</span>
+            </button>
+        </div>
+    </main>
+
+    <!-- Game Over Modal -->
+    <div id="game-over" class="fixed inset-0 bg-black bg-opacity-70 hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white p-8 rounded-3xl max-w-sm w-full text-center">
+            <h2 class="text-4xl text-red-600 mb-2 score-font">GAME OVER!</h2>
+            <p class="text-gray-600 mb-6">Your score fell below zero. Every piece of trash matters!</p>
+            <div class="bg-gray-100 p-4 rounded-xl mb-6">
+                <span class="text-sm text-gray-500 block uppercase font-bold">Final Score</span>
+                <span id="final-score" class="text-4xl font-black text-gray-800">0</span>
+            </div>
+            <button onclick="restartGame()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl transition-colors shadow-lg">
+                Try Again
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const materials = [
+            { name: "Greasy Pizza Box", emoji: "🍕", bin: "trash", tip: "Grease contaminates paper recycling!" },
+            { name: "Wine Bottle", emoji: "🍾", bin: "glass", tip: "Glass is 100% recyclable." },
+            { name: "Soda Can", emoji: "🥤", bin: "plastic", tip: "Aluminum cans and plastic bottles go here." },
+            { name: "Old Laptop", emoji: "💻", bin: "devices", tip: "Electronics contain hazardous materials." },
+            { name: "Newspaper", emoji: "📰", bin: "paper", tip: "Clean paper is easily recycled." },
+            { name: "Rusty Iron Pipe", emoji: "⛓️", bin: "metal", tip: "Scrap metal should be separated." },
+            { name: "Banana Peel", emoji: "🍌", bin: "trash", tip: "Organic waste goes to compost or trash." },
+            { name: "Glass Jar", emoji: "🫙", bin: "glass", tip: "Rinse it out first!" },
+            { name: "Broken Smartphone", emoji: "📱", bin: "devices", tip: "Batteries inside are dangerous in trash." },
+            { name: "Steel Bean Can", emoji: "🥫", bin: "metal", tip: "Steel and tin are infinitely recyclable." },
+            { name: "Cardboard Box", emoji: "📦", bin: "paper", tip: "Flatten it to save space!" },
+            { name: "Styrofoam Cup", emoji: "☕", bin: "trash", tip: "Styrofoam is rarely recyclable in curbside bins." },
+            { name: "Magazines", emoji: "📖", bin: "paper", tip: "Glossy paper is still paper!" },
+            { name: "Broken Tablet", emoji: "📟", bin: "devices", tip: "E-waste requires special handling." },
+            { name: "Plastic Water Bottle", emoji: "🍼", bin: "plastic", tip: "Keep the cap on or off depending on local rules!" },
+            { name: "Copper Wiring", emoji: "🔌", bin: "metal", tip: "Copper is highly valuable scrap." }
+        ];
+
+        let score = 0;
+        let currentItem = null;
+        let usedItems = [];
+
+        const scoreEl = document.getElementById('score');
+        const itemNameEl = document.getElementById('item-name');
+        const itemEmojiEl = document.getElementById('item-emoji');
+        const itemCard = document.getElementById('current-item');
+        const feedbackEl = document.getElementById('feedback');
+        const gameOverModal = document.getElementById('game-over');
+        const finalScoreEl = document.getElementById('final-score');
+
+        function nextItem() {
+            if (usedItems.length === materials.length) {
+                usedItems = []; // Loop back
+            }
+
+            let available = materials.filter(m => !usedItems.includes(m));
+            const randomIndex = Math.floor(Math.random() * available.length);
+            currentItem = available[randomIndex];
+            usedItems.push(currentItem);
+
+            // Update UI
+            itemNameEl.textContent = currentItem.name;
+            itemEmojiEl.textContent = currentItem.emoji;
+            
+            // Animation
+            itemCard.classList.remove('pop');
+            void itemCard.offsetWidth; // Trigger reflow
+            itemCard.classList.add('pop');
+        }
+
+        function showFeedback(text, isCorrect) {
+            feedbackEl.textContent = text;
+            feedbackEl.className = `h-8 mb-4 font-bold text-lg transition-all duration-300 opacity-100 ${isCorrect ? 'text-green-600' : 'text-red-600'}`;
+            
+            setTimeout(() => {
+                feedbackEl.classList.add('opacity-0');
+            }, 2000);
+        }
+
+        function checkBin(binType) {
+            if (binType === currentItem.bin) {
+                score += 3;
+                showFeedback(`Correct! +3 Points. ${currentItem.tip}`, true);
+                scoreEl.classList.add('pop');
+                setTimeout(() => scoreEl.classList.remove('pop'), 300);
+            } else {
+                score -= 2;
+                showFeedback(`Incorrect! -2 Points. ${currentItem.name} goes in ${currentItem.bin.toUpperCase()}.`, false);
+                itemCard.classList.add('shake');
+                setTimeout(() => itemCard.classList.remove('shake'), 500);
+            }
+
+            updateScoreUI();
+
+            if (score < 0) {
+                endGame();
+            } else {
+                nextItem();
+            }
+        }
+
+        function updateScoreUI() {
+            scoreEl.textContent = score;
+        }
+
+        function endGame() {
+            finalScoreEl.textContent = score;
+            gameOverModal.classList.remove('hidden');
+        }
+
+        function restartGame() {
+            score = 0;
+            usedItems = [];
+            updateScoreUI();
+            gameOverModal.classList.add('hidden');
+            nextItem();
+        }
+
+        // Initialize
+        window.onload = nextItem;
+    </script>
+</body>
+</html>
