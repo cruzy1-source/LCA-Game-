@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eco-Sorter: The Recycling Challenge</title>
+    <title>Eco-Sorter: Blitz Challenge</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@400;600&display=swap');
@@ -12,6 +12,7 @@
             font-family: 'Quicksand', sans-serif;
             background-color: #f0fdf4;
             overflow-x: hidden;
+            user-select: none;
         }
 
         h1, .score-font {
@@ -24,12 +25,7 @@
         }
 
         .item-card {
-            cursor: grab;
-            transition: transform 0.2s;
-        }
-
-        .item-card:active {
-            cursor: grabbing;
+            transition: transform 0.2s, opacity 0.3s;
         }
 
         .shake {
@@ -52,19 +48,42 @@
             50% { transform: scale(1.2); }
             100% { transform: scale(1); }
         }
+
+        .hazard-glow {
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
+            border-color: #ef4444 !important;
+        }
+
+        .timer-low {
+            color: #ef4444;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col items-center p-4">
 
     <!-- Header Section -->
     <header class="w-full max-w-4xl flex justify-between items-center mb-8 mt-4">
-        <div>
-            <h1 class="text-4xl text-green-700">Eco-Sorter</h1>
-            <p class="text-green-600 font-semibold">Keep the planet clean!</p>
+        <div class="flex flex-col">
+            <h1 class="text-4xl text-green-700">Eco-Sorter <span class="text-red-500 text-2xl">BLITZ</span></h1>
+            <p class="text-green-600 font-semibold">30 Seconds to Save the Earth!</p>
         </div>
-        <div class="bg-white px-6 py-3 rounded-2xl shadow-md border-b-4 border-green-200">
-            <span class="text-gray-500 uppercase text-xs font-bold block">Current Score</span>
-            <span id="score" class="score-font text-3xl text-green-600">0</span>
+        
+        <div class="flex gap-4">
+            <div class="bg-white px-4 py-2 rounded-2xl shadow-md border-b-4 border-red-200 text-center min-w-[100px]">
+                <span class="text-gray-500 uppercase text-[10px] font-bold block">Time Left</span>
+                <span id="timer" class="score-font text-3xl text-gray-700">30s</span>
+            </div>
+            <div class="bg-white px-6 py-2 rounded-2xl shadow-md border-b-4 border-green-200 text-center min-w-[120px]">
+                <span class="text-gray-500 uppercase text-[10px] font-bold block">Score</span>
+                <span id="score" class="score-font text-3xl text-green-600">0</span>
+            </div>
         </div>
     </header>
 
@@ -72,44 +91,39 @@
     <main id="game-container" class="w-full max-w-5xl flex flex-col items-center">
         
         <!-- Current Item Card -->
-        <div id="item-display" class="relative mb-12 h-48 flex items-center justify-center w-full">
+        <div id="item-display" class="relative mb-8 h-56 flex items-center justify-center w-full">
             <div id="current-item" class="item-card bg-white p-6 rounded-3xl shadow-xl border-2 border-green-100 flex flex-col items-center w-64">
-                <div id="item-emoji" class="text-6xl mb-2">📦</div>
+                <div id="item-emoji" class="text-7xl mb-2">📦</div>
                 <div id="item-name" class="text-xl font-bold text-gray-700">Cardboard</div>
+                <div id="hazard-warning" class="hidden text-red-500 text-xs font-black uppercase mt-2">⚠️ DANGER: DO NOT BIN! ⚠️</div>
             </div>
         </div>
 
         <!-- Feedback Message -->
-        <div id="feedback" class="h-8 mb-4 font-bold text-lg transition-all duration-300 opacity-0"></div>
+        <div id="feedback" class="h-12 mb-4 font-bold text-center text-lg transition-all duration-300 opacity-0 max-w-md"></div>
 
         <!-- Bins Grid -->
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 w-full">
-            <!-- Trash -->
             <button onclick="checkBin('trash')" class="bin-hover transition-all bg-gray-600 p-4 rounded-2xl flex flex-col items-center text-white shadow-lg">
                 <span class="text-4xl mb-2">🗑️</span>
                 <span class="font-bold uppercase text-xs">Trash</span>
             </button>
-            <!-- Glass -->
             <button onclick="checkBin('glass')" class="bin-hover transition-all bg-blue-400 p-4 rounded-2xl flex flex-col items-center text-white shadow-lg">
                 <span class="text-4xl mb-2">🍷</span>
                 <span class="font-bold uppercase text-xs">Glass</span>
             </button>
-            <!-- Cans & Bottles -->
             <button onclick="checkBin('plastic')" class="bin-hover transition-all bg-yellow-500 p-4 rounded-2xl flex flex-col items-center text-white shadow-lg">
                 <span class="text-4xl mb-2">🥤</span>
                 <span class="font-bold uppercase text-xs text-center">Cans & Bottles</span>
             </button>
-            <!-- Metal -->
             <button onclick="checkBin('metal')" class="bin-hover transition-all bg-slate-400 p-4 rounded-2xl flex flex-col items-center text-white shadow-lg">
                 <span class="text-4xl mb-2">⛓️</span>
                 <span class="font-bold uppercase text-xs">Metal</span>
             </button>
-            <!-- Paper -->
             <button onclick="checkBin('paper')" class="bin-hover transition-all bg-blue-600 p-4 rounded-2xl flex flex-col items-center text-white shadow-lg">
                 <span class="text-4xl mb-2">📄</span>
                 <span class="font-bold uppercase text-xs">Paper</span>
             </button>
-            <!-- Devices -->
             <button onclick="checkBin('devices')" class="bin-hover transition-all bg-purple-600 p-4 rounded-2xl flex flex-col items-center text-white shadow-lg">
                 <span class="text-4xl mb-2">💻</span>
                 <span class="font-bold uppercase text-xs">Devices</span>
@@ -117,123 +131,194 @@
         </div>
     </main>
 
-    <!-- Game Over Modal -->
-    <div id="game-over" class="fixed inset-0 bg-black bg-opacity-70 hidden flex items-center justify-center p-4 z-50">
-        <div class="bg-white p-8 rounded-3xl max-w-sm w-full text-center">
-            <h2 class="text-4xl text-red-600 mb-2 score-font">GAME OVER!</h2>
-            <p class="text-gray-600 mb-6">Your score fell below zero. Every piece of trash matters!</p>
-            <div class="bg-gray-100 p-4 rounded-xl mb-6">
-                <span class="text-sm text-gray-500 block uppercase font-bold">Final Score</span>
-                <span id="final-score" class="text-4xl font-black text-gray-800">0</span>
+    <!-- Game Over/Start Modal -->
+    <div id="modal-overlay" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4 z-50">
+        <div class="bg-white p-8 rounded-3xl max-w-md w-full text-center shadow-2xl">
+            <div id="start-content">
+                <h2 class="text-4xl text-green-600 mb-4 score-font">READY?</h2>
+                <ul class="text-left text-gray-600 space-y-2 mb-6 text-sm">
+                    <li>✅ <strong>Correct Bin:</strong> +3 Points</li>
+                    <li>❌ <strong>Wrong Bin:</strong> -2 Points</li>
+                    <li>☢️ <strong>Hazardous:</strong> Do NOT sort! Wait 2 seconds.</li>
+                    <li>💥 <strong>Hazard Penalty:</strong> -10 Points if you try to bin it!</li>
+                    <li>🛑 <strong>Game Over:</strong> Score < 0 or Time Up.</li>
+                </ul>
+                <button onclick="startGame()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl transition-all scale-105 shadow-lg">
+                    START BLITZ
+                </button>
             </div>
-            <button onclick="restartGame()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl transition-colors shadow-lg">
-                Try Again
-            </button>
+            <div id="end-content" class="hidden">
+                <h2 id="end-title" class="text-4xl text-red-600 mb-2 score-font">TIME UP!</h2>
+                <p id="end-msg" class="text-gray-600 mb-6">Great job helping the planet!</p>
+                <div class="bg-gray-100 p-4 rounded-xl mb-6">
+                    <span class="text-sm text-gray-500 block uppercase font-bold">Final Score</span>
+                    <span id="final-score" class="text-5xl font-black text-gray-800">0</span>
+                </div>
+                <button onclick="startGame()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl transition-colors shadow-lg">
+                    Play Again
+                </button>
+            </div>
         </div>
     </div>
 
     <script>
         const materials = [
-            { name: "Greasy Pizza Box", emoji: "🍕", bin: "trash", tip: "Grease contaminates paper recycling!" },
+            { name: "Greasy Pizza Box", emoji: "🍕", bin: "trash", tip: "Grease ruins paper recycling!" },
             { name: "Wine Bottle", emoji: "🍾", bin: "glass", tip: "Glass is 100% recyclable." },
-            { name: "Soda Can", emoji: "🥤", bin: "plastic", tip: "Aluminum cans and plastic bottles go here." },
-            { name: "Old Laptop", emoji: "💻", bin: "devices", tip: "Electronics contain hazardous materials." },
-            { name: "Newspaper", emoji: "📰", bin: "paper", tip: "Clean paper is easily recycled." },
-            { name: "Rusty Iron Pipe", emoji: "⛓️", bin: "metal", tip: "Scrap metal should be separated." },
-            { name: "Banana Peel", emoji: "🍌", bin: "trash", tip: "Organic waste goes to compost or trash." },
-            { name: "Glass Jar", emoji: "🫙", bin: "glass", tip: "Rinse it out first!" },
-            { name: "Broken Smartphone", emoji: "📱", bin: "devices", tip: "Batteries inside are dangerous in trash." },
-            { name: "Steel Bean Can", emoji: "🥫", bin: "metal", tip: "Steel and tin are infinitely recyclable." },
-            { name: "Cardboard Box", emoji: "📦", bin: "paper", tip: "Flatten it to save space!" },
-            { name: "Styrofoam Cup", emoji: "☕", bin: "trash", tip: "Styrofoam is rarely recyclable in curbside bins." },
-            { name: "Magazines", emoji: "📖", bin: "paper", tip: "Glossy paper is still paper!" },
-            { name: "Broken Tablet", emoji: "📟", bin: "devices", tip: "E-waste requires special handling." },
-            { name: "Plastic Water Bottle", emoji: "🍼", bin: "plastic", tip: "Keep the cap on or off depending on local rules!" },
-            { name: "Copper Wiring", emoji: "🔌", bin: "metal", tip: "Copper is highly valuable scrap." }
+            { name: "Soda Can", emoji: "🥤", bin: "plastic", tip: "Plastic and aluminum go together here." },
+            { name: "Old Laptop", emoji: "💻", bin: "devices", tip: "E-waste contains heavy metals." },
+            { name: "Newspaper", emoji: "📰", bin: "paper", tip: "Clean paper is great for recycling." },
+            { name: "Steel Bean Can", emoji: "🥫", bin: "metal", tip: "Steel is infinitely recyclable." },
+            { name: "Banana Peel", emoji: "🍌", bin: "trash", tip: "Food waste is trash/compost." },
+            { name: "Broken Tablet", emoji: "📟", bin: "devices", tip: "Don't throw lithium in the trash!" },
+            { name: "Styrofoam Cup", emoji: "☕", bin: "trash", tip: "Styrofoam is a recycling no-go." },
+            { name: "Magazines", emoji: "📖", bin: "paper", tip: "Glossy paper is recyclable." },
+            // HAZARDOUS ITEMS
+            { name: "Toxic Chemicals", emoji: "🧪", bin: "hazard", tip: "HAZARD! Must be taken to a special facility." },
+            { name: "Car Battery", emoji: "🔋", bin: "hazard", tip: "HAZARD! Acids and lead are dangerous." },
+            { name: "Old Paint Bucket", emoji: "🎨", bin: "hazard", tip: "HAZARD! Wet paint is toxic waste." },
+            { name: "Medical Waste", emoji: "💉", bin: "hazard", tip: "HAZARD! Biohazards need special disposal." }
         ];
 
         let score = 0;
+        let timeLeft = 30;
+        let timerInterval = null;
+        let hazardTimeout = null;
         let currentItem = null;
-        let usedItems = [];
+        let gameActive = false;
 
         const scoreEl = document.getElementById('score');
+        const timerEl = document.getElementById('timer');
         const itemNameEl = document.getElementById('item-name');
         const itemEmojiEl = document.getElementById('item-emoji');
         const itemCard = document.getElementById('current-item');
         const feedbackEl = document.getElementById('feedback');
-        const gameOverModal = document.getElementById('game-over');
+        const modal = document.getElementById('modal-overlay');
+        const startContent = document.getElementById('start-content');
+        const endContent = document.getElementById('end-content');
         const finalScoreEl = document.getElementById('final-score');
+        const hazardWarning = document.getElementById('hazard-warning');
+
+        function startGame() {
+            score = 0;
+            timeLeft = 30;
+            gameActive = true;
+            modal.classList.add('hidden');
+            startContent.classList.add('hidden');
+            endContent.classList.add('hidden');
+            updateScoreUI();
+            updateTimerUI();
+            
+            clearInterval(timerInterval);
+            timerInterval = setInterval(updateTimer, 1000);
+            
+            nextItem();
+        }
+
+        function updateTimer() {
+            timeLeft--;
+            updateTimerUI();
+            if (timeLeft <= 0) {
+                endGame("TIME UP!");
+            }
+        }
+
+        function updateTimerUI() {
+            timerEl.textContent = timeLeft + "s";
+            if (timeLeft <= 10) {
+                timerEl.classList.add('timer-low');
+            } else {
+                timerEl.classList.remove('timer-low');
+            }
+        }
 
         function nextItem() {
-            if (usedItems.length === materials.length) {
-                usedItems = []; // Loop back
-            }
+            if (!gameActive) return;
+            
+            clearTimeout(hazardTimeout);
+            itemCard.classList.remove('hazard-glow');
+            hazardWarning.classList.add('hidden');
 
-            let available = materials.filter(m => !usedItems.includes(m));
-            const randomIndex = Math.floor(Math.random() * available.length);
-            currentItem = available[randomIndex];
-            usedItems.push(currentItem);
+            const randomIndex = Math.floor(Math.random() * materials.length);
+            currentItem = materials[randomIndex];
 
-            // Update UI
             itemNameEl.textContent = currentItem.name;
             itemEmojiEl.textContent = currentItem.emoji;
             
-            // Animation
             itemCard.classList.remove('pop');
-            void itemCard.offsetWidth; // Trigger reflow
+            void itemCard.offsetWidth; 
             itemCard.classList.add('pop');
-        }
 
-        function showFeedback(text, isCorrect) {
-            feedbackEl.textContent = text;
-            feedbackEl.className = `h-8 mb-4 font-bold text-lg transition-all duration-300 opacity-100 ${isCorrect ? 'text-green-600' : 'text-red-600'}`;
-            
-            setTimeout(() => {
-                feedbackEl.classList.add('opacity-0');
-            }, 2000);
+            if (currentItem.bin === 'hazard') {
+                itemCard.classList.add('hazard-glow');
+                hazardWarning.classList.remove('hidden');
+                
+                // If it's a hazard, user must wait 2 seconds
+                hazardTimeout = setTimeout(() => {
+                    if (gameActive && currentItem.bin === 'hazard') {
+                        score += 3;
+                        showFeedback("Good eye! Hazardous waste requires special disposal. +3", true);
+                        updateScoreUI();
+                        nextItem();
+                    }
+                }, 2000);
+            }
         }
 
         function checkBin(binType) {
-            if (binType === currentItem.bin) {
+            if (!gameActive) return;
+
+            if (currentItem.bin === 'hazard') {
+                // Massive penalty for trying to bin a hazard
+                score -= 10;
+                showFeedback("CRITICAL ERROR! Never bin hazardous waste! -10 Points", false);
+                itemCard.classList.add('shake');
+            } else if (binType === currentItem.bin) {
                 score += 3;
-                showFeedback(`Correct! +3 Points. ${currentItem.tip}`, true);
-                scoreEl.classList.add('pop');
-                setTimeout(() => scoreEl.classList.remove('pop'), 300);
+                showFeedback(`Correct! +3. ${currentItem.tip}`, true);
             } else {
                 score -= 2;
-                showFeedback(`Incorrect! -2 Points. ${currentItem.name} goes in ${currentItem.bin.toUpperCase()}.`, false);
+                showFeedback(`Wrong! ${currentItem.name} goes in ${currentItem.bin.toUpperCase()}. -2`, false);
                 itemCard.classList.add('shake');
-                setTimeout(() => itemCard.classList.remove('shake'), 500);
             }
 
             updateScoreUI();
-
             if (score < 0) {
-                endGame();
+                endGame("SCORE TOO LOW!");
             } else {
+                setTimeout(() => {
+                    if (gameActive) itemCard.classList.remove('shake');
+                }, 500);
                 nextItem();
             }
         }
 
+        function showFeedback(text, isCorrect) {
+            feedbackEl.textContent = text;
+            feedbackEl.className = `h-12 mb-4 font-bold text-center text-lg transition-all duration-300 opacity-100 ${isCorrect ? 'text-green-600' : 'text-red-600'}`;
+            setTimeout(() => {
+                feedbackEl.classList.add('opacity-0');
+            }, 1500);
+        }
+
         function updateScoreUI() {
             scoreEl.textContent = score;
+            scoreEl.classList.add('pop');
+            setTimeout(() => scoreEl.classList.remove('pop'), 200);
         }
 
-        function endGame() {
+        function endGame(reason) {
+            gameActive = false;
+            clearInterval(timerInterval);
+            clearTimeout(hazardTimeout);
+            
+            document.getElementById('end-title').textContent = reason;
+            document.getElementById('end-msg').textContent = score < 0 ? "Be more careful with our resources!" : "Excellent sorting skills!";
             finalScoreEl.textContent = score;
-            gameOverModal.classList.remove('hidden');
+            
+            modal.classList.remove('hidden');
+            endContent.classList.remove('hidden');
         }
-
-        function restartGame() {
-            score = 0;
-            usedItems = [];
-            updateScoreUI();
-            gameOverModal.classList.add('hidden');
-            nextItem();
-        }
-
-        // Initialize
-        window.onload = nextItem;
     </script>
 </body>
 </html>
